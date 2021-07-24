@@ -1,7 +1,9 @@
 package app
 
 import (
+	"github.com/djedjethai/bankingAuth/domain"
 	"github.com/djedjethai/bankingAuth/logger"
+	"github.com/djedjethai/bankingAuth/service"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -29,14 +31,14 @@ func Start() {
 	dbClient := getDbClient()
 
 	// add dbclient into domain
-
+	dom := domain.NewAuthRepository(dbClient)
 	// add domain into service
-
-	// svc instance
-	// ah := ...
+	s := service.NewService(dom)
+	// create the authHadler
+	ah := authHandler{s}
 
 	r := mux.NewRouter()
-	r.HandleFunc("/auth/login", ah.Login).Methods(http.MethodPost)
+	r.HandleFunc("/auth/login", ah.login).Methods(http.MethodPost)
 	// r.HandleFunc("/auth/register", ah.NotImplemented).Methods(http.MethodPost)
 	// r.HandleFunc("/auth/refresh", ah.Refresh).Methods(http.MethodPost)
 	// r.HandleFunc("/auth/verify", ah.Verify).Methods(http.MethodGet)

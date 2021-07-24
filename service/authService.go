@@ -5,20 +5,38 @@ import (
 	"github.com/djedjethai/bankingAuth/errs"
 )
 
-type Service interface {
+type AuthService interface {
+	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 }
 
 type Domain interface {
 }
 
-type service struct {
-	db Domain
+type authService struct {
+	repo Domain
 }
 
 func NewService(db Domain) *service {
-	return &service{db}
+	return &authService{db}
 }
 
-func (s Service) Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppErr) {
+func (s authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppErr) {
+	var login *domain.Login
+	var appErr *errs.AppError
+
+	login, appError = s.repo.FindBy(lr.Username, lr.Password)
+	if appErr != nil {
+		return nil, appErr
+	}
+
+	claims := login.ClaimsForAccessToken()
+	authToken := domain.NewAuthToken(claims)
+
+	var accessToken, refreshToken string
+	if accessToken, appErr = authToken.NewAccessToken(); appErr != nil {
+		return nil, appErr
+	}
+
+	// .......................... a finir
 
 }
