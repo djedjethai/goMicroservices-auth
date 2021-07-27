@@ -7,6 +7,8 @@ import (
 )
 
 type AuthRepository interface {
+	FindBy(string, string) (*Login, *errs.AppError)
+	GenerateAndSaveRefreshTokenToStore(AuthToken) (string, *errs.AppError)
 }
 
 type authRepository struct {
@@ -33,4 +35,23 @@ func (c authRepository) FindBy(username, password string) (*Login, *errs.AppErro
 	}
 
 	return &login, nil
+}
+
+func (c authRepository) GenerateAndSaveRefreshTokenToStore(authToken AuthToken) (string, *errs.AppError) {
+	// generate the refresh token
+	var appErr *AppError
+	var refreshedToken string
+	if refreshToken, appErr := authToken.newRefreshToken(); err != nil {
+		return "", appErr
+	}
+
+	// store it the store
+	sqlInsert := "insert into refresh_token_store (refresh_token) values (?)"
+	_, err := c.client.Exec(sqlInsert, refreshToken)
+	if err != nil {
+		logger.Error("Unexpected database error when saving refresh token" + err.Error())
+		return "", errs.NewInternalServerError("Unexpected server error")
+	}
+
+	return refreshedToken, nil
 }

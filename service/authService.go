@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/djedjethai/bankingAuth/domain"
 	"github.com/djedjethai/bankingAuth/dto"
 	"github.com/djedjethai/bankingAuth/errs"
 )
@@ -10,13 +11,15 @@ type AuthService interface {
 }
 
 type Domain interface {
+	FindBy(string, string) (*Loggin, *errs.AppError)
+	GenerateAndSaveRefreshTokenToStore(AuthToken) (string, *errs.AppError)
 }
 
 type authService struct {
 	repo Domain
 }
 
-func NewService(db Domain) *service {
+func NewService(db Domain) *authService {
 	return &authService{db}
 }
 
@@ -37,6 +40,9 @@ func (s authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppEr
 		return nil, appErr
 	}
 
-	// .......................... a finir
+	if refreshToken, appErr = s.repo.GenerateAndSaveRefreshTokenToStore(authToken); err != nil {
+		return nil, appErr
+	}
 
+	return &dto.LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
