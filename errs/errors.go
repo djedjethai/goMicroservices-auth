@@ -5,32 +5,38 @@ import (
 )
 
 type AppError struct {
-	Code    int    `json:"code"`
+	Code    int    `json:",omitempty"`
 	Message string `json:"message"`
 }
 
-func (e AppError) NewBadRequestError(message string) *AppError {
+func (e *AppError) AsMessage() *AppError {
+	return &AppError{
+		Message: e.Message,
+	}
+}
+
+func NewBadRequestError(message string) *AppError {
 	return &AppError{
 		Code:    http.StatusBadRequest,
 		Message: message,
 	}
 }
 
-func (e AppError) NewNotFoundError(message string) *AppError {
+func NewNotFoundError(message string) *AppError {
 	return &AppError{
 		Code:    http.StatusNotFound,
 		Message: message,
 	}
 }
 
-func (e AppError) NewInternalServerError(message string) *AppError {
+func NewInternalServerError(message string) *AppError {
 	return &AppError{
 		Code:    http.StatusInternalServerError,
 		Message: message,
 	}
 }
 
-func (e AppError) NewValidationError(message string) *AppError {
+func NewValidationError(message string) *AppError {
 	return &AppError{
 		Code:    http.StatusUnprocessableEntity,
 		Message: message,

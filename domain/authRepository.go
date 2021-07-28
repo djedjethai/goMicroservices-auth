@@ -3,6 +3,7 @@ package domain
 import (
 	"database/sql"
 	"github.com/djedjethai/bankingAuth/errs"
+	"github.com/djedjethai/bankingAuth/logger"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -39,15 +40,15 @@ func (c authRepository) FindBy(username, password string) (*Login, *errs.AppErro
 
 func (c authRepository) GenerateAndSaveRefreshTokenToStore(authToken AuthToken) (string, *errs.AppError) {
 	// generate the refresh token
-	var appErr *AppError
+	var appErr *errs.AppError
 	var refreshedToken string
-	if refreshToken, appErr := authToken.newRefreshToken(); err != nil {
+	if refreshedToken, appErr = authToken.newRefreshToken(); appErr != nil {
 		return "", appErr
 	}
 
 	// store it the store
 	sqlInsert := "insert into refresh_token_store (refresh_token) values (?)"
-	_, err := c.client.Exec(sqlInsert, refreshToken)
+	_, err := c.client.Exec(sqlInsert, refreshedToken)
 	if err != nil {
 		logger.Error("Unexpected database error when saving refresh token" + err.Error())
 		return "", errs.NewInternalServerError("Unexpected server error")

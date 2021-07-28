@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/djedjethai/bankingAuth/dto"
 	"github.com/djedjethai/bankingAuth/errs"
+	"github.com/djedjethai/bankingAuth/logger"
 	"github.com/djedjethai/bankingAuth/service"
 	"net/http"
 )
@@ -12,7 +13,7 @@ type authHandler struct {
 	service service.AuthService
 }
 
-func writeResponse(w http.ResponseWritter, code int, data interface{}) {
+func writeResponse(w http.ResponseWriter, code int, data interface{}) {
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -21,7 +22,7 @@ func writeResponse(w http.ResponseWritter, code int, data interface{}) {
 	}
 }
 
-func (h authHandler) login(w http.ResponseWritter, r *http.Request) {
+func (h authHandler) login(w http.ResponseWriter, r *http.Request) {
 	var loginReq dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
 		logger.Error("Error when decode login request" + err.Error())

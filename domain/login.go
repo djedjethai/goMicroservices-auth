@@ -15,6 +15,7 @@ type Login struct {
 }
 
 func (l Login) ClaimsForAccessToken() AccessTokenClaims {
+	// we can check .Valid as we set sql.NullString (l.12)
 	if l.Accounts.Valid && l.CustomerId.Valid {
 		return l.claimsForUser()
 	} else {
@@ -23,13 +24,13 @@ func (l Login) ClaimsForAccessToken() AccessTokenClaims {
 }
 
 func (l Login) claimsForUser() AccessTokenClaims {
-	accounts := strings.Split(l.Accounts.Strings, ",")
+	accounts := strings.Split(l.Accounts.String, ",")
 	return AccessTokenClaims{
 		CustomerId: l.CustomerId.String,
 		Accounts:   accounts,
 		Username:   l.Username,
 		Role:       l.Role,
-		StandardClaims: jwt.StandartClaims{
+		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(ACCESS_TOKEN_DURATION).Unix(),
 		},
 	}
@@ -39,7 +40,7 @@ func (l Login) claimsForAdmin() AccessTokenClaims {
 	return AccessTokenClaims{
 		Username: l.Username,
 		Role:     l.Role,
-		StandardClaims: jwt.StandartClaims{
+		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(ACCESS_TOKEN_DURATION).Unix(),
 		},
 	}

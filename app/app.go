@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/djedjethai/bankingAuth/domain"
 	"github.com/djedjethai/bankingAuth/logger"
 	"github.com/djedjethai/bankingAuth/service"
@@ -46,7 +47,7 @@ func Start() {
 	address := os.Getenv("SERVER_ADDR")
 	port := os.Getenv("SERVER_PORT")
 	logger.Info(fmt.Sprintf("starting Oauth server on %s:%s", address, port))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("Listen on: %s:%s", address, port), NewRouter))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("Listen on: %s:%s", address, port), r))
 }
 
 func getDbClient() *sqlx.DB {
