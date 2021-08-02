@@ -5,6 +5,7 @@ import (
 	"github.com/djedjethai/bankingAuth/domain"
 	"github.com/djedjethai/bankingAuth/logger"
 	"github.com/djedjethai/bankingAuth/service"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -14,6 +15,7 @@ import (
 )
 
 func sanityCheck() {
+
 	if os.Getenv("SERVER_ADDR") == "" ||
 		os.Getenv("SERVER_PORT") == "" ||
 		os.Getenv("DB_USER") == "" ||
@@ -57,9 +59,17 @@ func getDbClient() *sqlx.DB {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
-	dataSource := fmt.Printf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPasswd, dbAddr, dbPort, dbName)
+	fmt.Printf("%v\n", dbUser)
+	fmt.Printf("%v\n", dbPasswd)
+	fmt.Printf("%v\n", dbAddr)
+	fmt.Printf("%v\n", dbPort)
+	fmt.Printf("%v\n", dbName)
+
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPasswd, dbAddr, dbPort, dbName)
 	client, err := sqlx.Open("mysql", dataSource)
 	if err != nil {
+
+		fmt.Println("passed snity check")
 		panic(err)
 	}
 
