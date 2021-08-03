@@ -2,6 +2,7 @@ package domain
 
 import (
 	"database/sql"
+	// "fmt"
 	"github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
 	"github.com/jmoiron/sqlx"
@@ -22,15 +23,18 @@ func NewAuthRepository(client *sqlx.DB) AuthRepository {
 
 func (c authRepository) FindBy(username, password string) (*Login, *errs.AppError) {
 	var login Login
-	sqlVerify := `SELECT username, u.customer_id, role, group_concat(a.account_id) as account_numbers FROM users u 
-	LEFT JOIN account a ON a.customer_id = u.customer_id
-	WHERE username = ? AND password = ?
-	GROUP BY a.customer_id`
+
+	sqlVerify := `SELECT username, u.customer_id, role, group_concat(a.account_id) as account_numbers FROM users u
+                LEFT JOIN accounts a ON a.customer_id = u.customer_id
+                WHERE username = ? and password = ?
+                GROUP BY a.customer_id`
 	err := c.client.Get(&login, sqlVerify, username, password)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			logger.Error("ErrNoRows in domain.FindBy " + err.Error())
 			return nil, errs.NewValidationError("invalid credentials")
 		} else {
+			logger.Error("Err in domain.FindBy" + err.Error())
 			return nil, errs.NewInternalServerError("Unexpected database error")
 		}
 	}

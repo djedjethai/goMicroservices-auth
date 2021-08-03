@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/djedjethai/bankingAuth/dto"
 	// "github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
@@ -32,6 +33,8 @@ func (h authHandler) login(w http.ResponseWriter, r *http.Request) {
 
 	token, appErr := h.service.Login(loginReq)
 	if appErr != nil {
+		logger.Error("In authHandler service.Login")
+		fmt.Printf("%v", appErr.AsMessage())
 		writeResponse(w, appErr.Code, appErr.AsMessage())
 	}
 

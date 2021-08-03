@@ -49,7 +49,7 @@ func Start() {
 	address := os.Getenv("SERVER_ADDR")
 	port := os.Getenv("SERVER_PORT")
 	logger.Info(fmt.Sprintf("starting Oauth server on %s:%s", address, port))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("Listen on: %s:%s", address, port), r))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", address, port), r))
 }
 
 func getDbClient() *sqlx.DB {
@@ -59,17 +59,9 @@ func getDbClient() *sqlx.DB {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
-	fmt.Printf("%v\n", dbUser)
-	fmt.Printf("%v\n", dbPasswd)
-	fmt.Printf("%v\n", dbAddr)
-	fmt.Printf("%v\n", dbPort)
-	fmt.Printf("%v\n", dbName)
-
 	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPasswd, dbAddr, dbPort, dbName)
 	client, err := sqlx.Open("mysql", dataSource)
 	if err != nil {
-
-		fmt.Println("passed snity check")
 		panic(err)
 	}
 

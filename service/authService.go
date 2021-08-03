@@ -1,6 +1,7 @@
 package service
 
 import (
+	// "fmt"
 	"github.com/djedjethai/bankingAuth/domain"
 	"github.com/djedjethai/bankingAuth/dto"
 	"github.com/djedjethai/bankingAuth/errs"
@@ -18,7 +19,7 @@ func NewService(db domain.AuthRepository) *authService {
 	return &authService{db}
 }
 
-func (s authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
+func (s *authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
 	var login *domain.Login
 	var appErr *errs.AppError
 
@@ -26,7 +27,6 @@ func (s authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppEr
 	if appErr != nil {
 		return nil, appErr
 	}
-
 	claims := login.ClaimsForAccessToken()
 	authToken := domain.NewAuthToken(claims)
 
