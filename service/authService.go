@@ -15,11 +15,11 @@ type authService struct {
 	repo domain.AuthRepository
 }
 
-func NewService(db domain.AuthRepository) *authService {
-	return &authService{db}
+func NewService(db domain.AuthRepository) authService {
+	return authService{db}
 }
 
-func (s *authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
+func (s authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
 	var login *domain.Login
 	var appErr *errs.AppError
 
