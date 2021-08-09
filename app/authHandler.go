@@ -14,12 +14,23 @@ type authHandler struct {
 	service service.AuthService
 }
 
-func writeResponse(w http.ResponseWriter, code int, data interface{}) {
-	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(code)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		logger.Error("Error when writter encode datas")
-		panic(err)
+func (h authHandler) verify(w http.ResponseWriter, r *http.Request) {
+	urlParams := make(map[string]string)
+
+	// converting from query to map type
+	for k := range r.URL.Query() {
+		urlParams[k] = r.URL.Query().Get(k)
+	}
+
+	if urlParams["token"] != "" {
+		appErr := h.service.Verify(urlParams)
+		if appErr != nil {
+			writeResponse(w, appErr.Code, notAuthorizedResponse(appErr.AsMessage()))
+		} else {
+			writeResponse(w, http.StatusOK, authorizedResponse())
+		}
+	} else {
+		writeResponse(w, http.StatusForbidden, notAuthorizedResponse("token missing"))
 	}
 }
 
@@ -39,4 +50,24 @@ func (h authHandler) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(w, http.StatusOK, *token)
+}
+
+func notAuthorizedResponse(msg string) map[string]interface{} {
+	return map[string]interface{}{
+		"isAuthorized": false,
+		"message":      msg,
+	}
+}
+
+func authorizedResponse() map[string]bool {
+	return map[string]bool{"isAuthorized": true}
+}
+
+func writeResponse(w http.ResponseWriter, code int, data interface{}) {
+	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(code)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		logger.Error("Error when writter encode datas")
+		panic(err)
+	}
 }
