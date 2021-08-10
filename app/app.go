@@ -36,7 +36,7 @@ func Start() {
 	// add dbclient into domain
 	dom := domain.NewAuthRepository(dbClient)
 	// add domain into service
-	s := service.NewService(dom)
+	s := service.NewService(dom, domain.GetRolePermissions())
 	// create the authHadler
 	ah := authHandler{s}
 
