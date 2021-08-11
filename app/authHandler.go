@@ -25,7 +25,7 @@ func (h authHandler) verify(w http.ResponseWriter, r *http.Request) {
 	if urlParams["token"] != "" {
 		appErr := h.service.Verify(urlParams)
 		if appErr != nil {
-			writeResponse(w, appErr.Code, notAuthorizedResponse(appErr.AsMessage()))
+			writeResponse(w, appErr.Code, notAuthorizedResponse(appErr.Message))
 		} else {
 			writeResponse(w, http.StatusOK, authorizedResponse())
 		}
