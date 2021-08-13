@@ -36,7 +36,7 @@ func Start() {
 	// add dbclient into domain
 	dom := domain.NewAuthRepository(dbClient)
 	// add domain into service
-	s := service.NewService(dom)
+	s := service.NewService(dom, domain.GetRolePermissions())
 	// create the authHadler
 	ah := authHandler{s}
 
@@ -44,8 +44,7 @@ func Start() {
 	r.HandleFunc("/auth/login", ah.login).Methods(http.MethodPost)
 	// r.HandleFunc("/auth/register", ah.NotImplemented).Methods(http.MethodPost)
 	// r.HandleFunc("/auth/refresh", ah.Refresh).Methods(http.MethodPost)
-	// r.HandleFunc("/auth/verify", ah.Verify).Methods(http.MethodGet)
-
+	r.HandleFunc("/auth/verify", ah.verify).Methods(http.MethodGet)
 	address := os.Getenv("SERVER_ADDR")
 	port := os.Getenv("SERVER_PORT")
 	logger.Info(fmt.Sprintf("starting Oauth server on %s:%s", address, port))
