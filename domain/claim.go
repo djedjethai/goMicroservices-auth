@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/djedjethai/bankingAuth/logger"
 	"time"
 )
 
@@ -49,7 +51,12 @@ func (c AccessTokenClaims) IsValidAccountId(accountId string) bool {
 }
 
 func (c AccessTokenClaims) IsRequestVerifiedWithTokenClaims(urlParams map[string]string) bool {
+
+	logger.Info("In IsRequestVerifiedWithTokenClaims: " + fmt.Sprintf("%v", urlParams))
+
 	if c.CustomerId != urlParams["customer_id"] {
+
+		logger.Info("CustomerId in verify token claim" + c.CustomerId)
 		return false
 	}
 

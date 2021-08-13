@@ -24,6 +24,9 @@ func NewService(db domain.AuthRepository, permissions domain.RolePermissions) *a
 }
 
 func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
+
+	logger.Info("get token for identification in auth svc" + urlParams["token"])
+
 	// convert the string token to JWT struct
 	if jwtToken, err := jwtTokenFromString(urlParams["token"]); err != nil {
 		return errs.NewAuthorizationError(err.Error())
@@ -34,15 +37,18 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 			// type cast the token claims to jwt.MapClaims
 			claims := jwtToken.Claims.(*domain.AccessTokenClaims)
 
+			logger.Info("Auth Verify after jwtToken.Valid: " + fmt.Sprintf("%v", claims))
 			/* if role if user, then check if the account_id and customer_id
 			   coming in the url belongs to the same token */
 			if claims.IsUserRole() {
+				logger.Info("In claims.IsUserRole")
 				if !claims.IsRequestVerifiedWithTokenClaims(urlParams) {
 					return errs.NewAuthorizationError("request not verified with the token")
 				}
 			}
 			// verify of the role is authorized to use the route
 			isAuthorized := s.rolePermissions.IsAuthorizedFor(claims.Role, urlParams["routeName"])
+			logger.Info("check if authorized after verif rolePermission: " + fmt.Sprintf("%v", isAuthorized))
 			if !isAuthorized {
 				return errs.NewAuthorizationError(fmt.Sprintf("%s role is not authorized", claims.Role))
 			}
@@ -80,6 +86,7 @@ func (s *authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppE
 
 func jwtTokenFromString(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &domain.AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		logger.Info("parsing the token in auth verify")
 		return []byte(domain.HMAC_SAMPLE_SECRET), nil
 	})
 	if err != nil {
@@ -87,5 +94,6 @@ func jwtTokenFromString(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
+	logger.Info("auth verify token done: " + fmt.Sprintf("%v", token))
 	return token, nil
 }

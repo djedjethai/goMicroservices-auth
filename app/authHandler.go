@@ -60,7 +60,7 @@ func notAuthorizedResponse(msg string) map[string]interface{} {
 }
 
 func authorizedResponse() map[string]bool {
-	return map[string]bool{"isAuthorized": true}
+	return map[string]bool{"IsAuthorized": true}
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}) {
