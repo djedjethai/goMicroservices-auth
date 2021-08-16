@@ -14,6 +14,21 @@ type authHandler struct {
 	service service.AuthService
 }
 
+func (h authHandler) refresh(w http.ResponseWriter, r *http.Request) {
+	var refreshRequest dto.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&refreshRequest); err != nil {
+		logger.Error("Error while decoding refresh token request" + err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		token, appErr := h.service.Refresh(refreshRequest)
+		if appErr != nil {
+			writeResponse(w, appErr.Code, appErr.AsMessage())
+		} else {
+			writeResponse(w, http.StatusOK, *token)
+		}
+	}
+}
+
 func (h authHandler) verify(w http.ResponseWriter, r *http.Request) {
 	urlParams := make(map[string]string)
 
