@@ -23,6 +23,25 @@ func NewService(db domain.AuthRepository, permissions domain.RolePermissions) *a
 	return &authService{db, permissions}
 }
 
+func (s *authService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError) {
+	if vErr := request.IsAccessTokenValid(); vErr != nil {
+		if vErr.Errors == jwt.ValidationErrorExpired {
+			// continue with the refresh token functionality
+			var appErr *errs.AppError
+			if appErr = s.repo.RefreshTokenExists(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+
+			// generate a access token from refresh token
+			var accessToken string
+			if accessToken, appErr = domain.NewAccessTokenFromRefreshToken(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+
+		}
+	}
+}
+
 func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 
 	logger.Info("get token for identification in auth svc" + urlParams["token"])
