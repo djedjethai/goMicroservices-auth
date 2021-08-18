@@ -12,6 +12,7 @@ import (
 type AuthService interface {
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Verify(map[string]string) *errs.AppError
+	Refresh(dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError)
 }
 
 type authService struct {
@@ -37,9 +38,11 @@ func (s *authService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginRespon
 			if accessToken, appErr = domain.NewAccessTokenFromRefreshToken(request.RefreshToken); appErr != nil {
 				return nil, appErr
 			}
-
+			return &dto.LoginResponse{AccessToken: accessToken}, nil
 		}
+		return nil, errs.NewAuthenticationError("invalide token")
 	}
+	return nil, errs.NewAuthenticationError("cannot generate a new token before the current one expire")
 }
 
 func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
