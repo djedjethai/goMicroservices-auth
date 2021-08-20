@@ -29,6 +29,8 @@ func (s *authService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginRespon
 		if vErr.Errors == jwt.ValidationErrorExpired {
 			// continue with the refresh token functionality
 			var appErr *errs.AppError
+			fmt.Printf("the teeest: %v\n", request.RefreshToken)
+
 			if appErr = s.repo.RefreshTokenExists(request.RefreshToken); appErr != nil {
 				return nil, appErr
 			}
@@ -80,6 +82,25 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 			return errs.NewAuthorizationError("Invalid token")
 		}
 	}
+
+}
+
+func (s *authService) signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
+
+	// check if password and username are ok(number and type char)
+
+	// check if username is avaible
+	usernameExist, err := s.repo.IsUsernameExist(username)
+	if err != nil {
+		// return err
+	}
+	if !usernameExist {
+		// return err username exist
+	}
+
+	// saveUser(username)
+
+	// return use previous credential to login using the following method
 
 }
 

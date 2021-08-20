@@ -9,7 +9,9 @@ import (
 
 const ACCESS_TOKEN_DURATION = time.Hour
 const HMAC_SAMPLE_SECRET = "hmacSampleSecret"
-const REFRESH_TOKEN_DURATION = time.Hour * 24 * 30
+
+// const REFRESH_TOKEN_DURATION = time.Hour * 24 * 30
+const REFRESH_TOKEN_DURATION = time.Minute * 1
 
 type RefreshTokenClaims struct {
 	TokenType  string   `json:"token_type"`

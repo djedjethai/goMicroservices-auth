@@ -12,6 +12,7 @@ type AuthRepository interface {
 	FindBy(string, string) (*Login, *errs.AppError)
 	GenerateAndSaveRefreshTokenToStore(AuthToken) (string, *errs.AppError)
 	RefreshTokenExists(string) *errs.AppError
+	IsUsernameExist(string) (bool, *errs.AppError)
 }
 
 type authRepository struct {
@@ -23,6 +24,8 @@ func NewAuthRepository(client *sqlx.DB) AuthRepository {
 }
 
 func (c authRepository) RefreshTokenExists(refreshToken string) *errs.AppError {
+	logger.Info("the refresh token before the db Refresh: " + refreshToken)
+
 	sqlSelect := "select refresh_token from refresh_token_store where refresh_token = ?"
 	var token string
 	err := c.client.Get(&token, sqlSelect, refreshToken)
@@ -35,6 +38,38 @@ func (c authRepository) RefreshTokenExists(refreshToken string) *errs.AppError {
 		}
 	}
 	return nil
+}
+
+// func (c authRepository) CreateUser(username, password string) (*Login, *errs.AppErrs){
+// 	var login Login
+//
+// 	tx, err := c.client.Begin()
+// 	if err != nil {
+// 		return nil, NewInternalServerError("Unexpected database error")
+// 	}
+//
+// 	result, errEx := tx.Exec(`INSERT INTO users (username, password) values (?,?)`, username, password)
+// 	if errEx != nil {
+// 		tx.Rollback()
+// 		logger.Error("Error while craeting a new user"+errEx.Error())
+// 		return nil, NewInternalServerError("Unexpected database error")
+// 	}
+// }
+
+func (c authRepository) IsUsernameExist(username string) (bool, *errs.AppError) {
+	var name string
+
+	sqlVerify := `SELECT username FROM users WHERE username = ?`
+	err := c.client.Get(&name, sqlVerify, username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return true, nil
+		} else {
+			return false, errs.NewInternalServerError("Unexpected database error")
+		}
+	}
+
+	return false, nil
 }
 
 func (c authRepository) FindBy(username, password string) (*Login, *errs.AppError) {
