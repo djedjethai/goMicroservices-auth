@@ -87,18 +87,37 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 
 func (s *authService) signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
 
-	// check if password and username are ok(number and type char)
+	// check user input
+	if err := sr.ValidUsernameAndPwdSyntax(); err != nil {
+		return nil, err
+	}
+	if err = sr.ValidNameDobCityZip(); err != nil {
+		return nil, err
+	}
 
-	// check if username is avaible
-	usernameExist, err := s.repo.IsUsernameExist(username)
+	// check if username is avaible, I SHOULD CHECK OTHER CREDENTIAL, but i don't 
+	usernameExist, err := s.repo.IsUsernameExist(sr.Username)
 	if err != nil {
-		// return err
+		return nil, err
 	}
 	if !usernameExist {
-		// return err username exist
+		return nil, errs.NewValidationError("Username is not available")
 	}
 
-	// saveUser(username)
+	// create customer
+	custDom := domain.CustomerDomain{
+		Name: sr.Name,
+		DateOfBirth: sr.DateOfBirth,
+		City: sr.City,
+		ZipCode: sr.ZipCode,
+		Username: sr.Username,
+		Password: sr.Password,
+	}
+
+	// create User(username, need the id from previous req)
+	login, err := s.repo.CreateCustAndUser(custDom){
+		
+	}	
 
 	// return use previous credential to login using the following method
 

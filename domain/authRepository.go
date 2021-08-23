@@ -40,21 +40,32 @@ func (c authRepository) RefreshTokenExists(refreshToken string) *errs.AppError {
 	return nil
 }
 
-// func (c authRepository) CreateUser(username, password string) (*Login, *errs.AppErrs){
-// 	var login Login
-//
-// 	tx, err := c.client.Begin()
-// 	if err != nil {
-// 		return nil, NewInternalServerError("Unexpected database error")
-// 	}
-//
-// 	result, errEx := tx.Exec(`INSERT INTO users (username, password) values (?,?)`, username, password)
-// 	if errEx != nil {
-// 		tx.Rollback()
-// 		logger.Error("Error while craeting a new user"+errEx.Error())
-// 		return nil, NewInternalServerError("Unexpected database error")
-// 	}
-// }
+// here not goood need add to customer table first then user table:wq
+func (c authRepository) CreateCustAndUser(cust CustomerDomain) (*Login, *errs.AppError) {
+
+	var login Login
+
+	tx, err := c.client.Begin()
+	if err != nil {
+		return nil, NewInternalServerError("Unexpected database error")
+	}
+
+	// insert into customer table first
+
+	// insert into user table(using the id from customer table)
+	result, errEx := tx.Exec(`INSERT INTO users (username, password, role, customer_id) values (?,?,?,?)`, username, password, "user", "--CustomerId--")
+
+	// c.FindBy(username, password string) and get back the token
+	// return the token
+
+	// make sure it rollback all queries in case of one fail
+	if errEx != nil {
+		tx.Rollback()
+		logger.Error("Error while craeting a new user" + errEx.Error())
+		return nil, NewInternalServerError("Unexpected database error")
+	}
+
+}
 
 func (c authRepository) IsUsernameExist(username string) (bool, *errs.AppError) {
 	var name string
