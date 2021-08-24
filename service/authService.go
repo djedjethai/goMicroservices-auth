@@ -13,6 +13,7 @@ type AuthService interface {
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Verify(map[string]string) *errs.AppError
 	Refresh(dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError)
+	Signup(dto.SignupRequest) *errs.AppError
 }
 
 type authService struct {
@@ -85,39 +86,47 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 
 }
 
-func (s *authService) signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
+// func (s *authService) signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
+func (s *authService) Signup(sr dto.SignupRequest) *errs.AppError {
 
 	// check user input
-	if err := sr.ValidUsernameAndPwdSyntax(); err != nil {
-		return nil, err
+	if err := sr.ValidNewUser(); err != nil {
+		// return nil, err
+		return err
 	}
-	if err = sr.ValidNameDobCityZip(); err != nil {
-		return nil, err
+	if err := sr.ValidNameDobCityZip(); err != nil {
+		// return nil, err
+		return err
 	}
 
-	// check if username is avaible, I SHOULD CHECK OTHER CREDENTIAL, but i don't 
+	// check if username is avaible, I SHOULD CHECK OTHER CREDENTIAL, but i don't
 	usernameExist, err := s.repo.IsUsernameExist(sr.Username)
 	if err != nil {
-		return nil, err
+		// return nil, err
+		return err
 	}
 	if !usernameExist {
-		return nil, errs.NewValidationError("Username is not available")
+		// return nil, errs.NewValidationError("Username is not available")
+		return err
 	}
 
 	// create customer
 	custDom := domain.CustomerDomain{
-		Name: sr.Name,
+		Name:        sr.Name,
 		DateOfBirth: sr.DateOfBirth,
-		City: sr.City,
-		ZipCode: sr.ZipCode,
-		Username: sr.Username,
-		Password: sr.Password,
+		City:        sr.City,
+		ZipCode:     sr.ZipCode,
+		Username:    sr.Username,
+		Password:    sr.Password,
 	}
 
 	// create User(username, need the id from previous req)
-	login, err := s.repo.CreateCustAndUser(custDom){
-		
-	}	
+	// login, err := s.repo.CreateCustAndUser(custDom)
+	err = s.repo.CreateCustAndUser(custDom)
+	if err != nil {
+		return err
+	}
+	return nil
 
 	// return use previous credential to login using the following method
 

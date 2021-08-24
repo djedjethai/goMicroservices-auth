@@ -2,30 +2,30 @@ package dto
 
 import (
 	"github.com/djedjethai/bankingAuth/errs"
-	"time"
+	// "time"
 )
 
 type SignupRequest struct {
-	Name         string    `json:"name"`
-	DateOfBirth  time.Time `json:"date_of_birth"`
-	City         string    `json:"city"`
-	ZipCode      int       `json:"zip_code"`
-	Username     string    `json:"username"`
-	Password     string    `json:"password"`
-	PasswordConf string    `json:"password_conf"`
+	Name         string `json:"name"`
+	DateOfBirth  string `json:"date_of_birth"`
+	City         string `json:"city"`
+	ZipCode      string `json:"zip_code"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	PasswordConf string `json:"password_conf"`
 }
 
 func (sr SignupRequest) ValidNameDobCityZip() *errs.AppError {
 	if len(sr.Name) < 4 ||
-		len(sr.City < 2) ||
+		len(sr.City) < 2 ||
 		len(sr.ZipCode) < 5 ||
 		len(sr.ZipCode) > 5 {
 		return errs.NewValidationError("Name or City or ZipCode is invalid")
 	}
 
-	if sr.DateOfBirth.IsZero {
-		return errs.NewValidationError("Date of bith incorrect")
-	}
+	// if sr.DateOfBirth.IsZero() {
+	// 	return errs.NewValidationError("Date of bith incorrect")
+	// }
 	return nil
 }
 

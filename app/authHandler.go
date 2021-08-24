@@ -14,6 +14,21 @@ type authHandler struct {
 	service service.AuthService
 }
 
+func (h authHandler) addCustomer(w http.ResponseWriter, r *http.Request) {
+	var signupRequest dto.SignupRequest
+	if err := json.NewDecoder(r.Body).Decode(&signupRequest); err != nil {
+		logger.Error("error when new customer signup")
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		appErr := h.service.Signup(signupRequest)
+		if err != nil {
+			writeResponse(w, appErr.Code, appErr.AsMessage())
+		} else {
+			writeResponse(w, http.StatusOK, "test RAS")
+		}
+	}
+}
+
 func (h authHandler) refresh(w http.ResponseWriter, r *http.Request) {
 	var refreshRequest dto.RefreshTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&refreshRequest); err != nil {

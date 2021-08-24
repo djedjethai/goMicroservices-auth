@@ -2,7 +2,7 @@ package domain
 
 import (
 	"database/sql"
-	// "fmt"
+	"fmt"
 	"github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
 	"github.com/jmoiron/sqlx"
@@ -13,6 +13,7 @@ type AuthRepository interface {
 	GenerateAndSaveRefreshTokenToStore(AuthToken) (string, *errs.AppError)
 	RefreshTokenExists(string) *errs.AppError
 	IsUsernameExist(string) (bool, *errs.AppError)
+	CreateCustAndUser(CustomerDomain) *errs.AppError
 }
 
 type authRepository struct {
@@ -41,29 +42,40 @@ func (c authRepository) RefreshTokenExists(refreshToken string) *errs.AppError {
 }
 
 // here not goood need add to customer table first then user table:wq
-func (c authRepository) CreateCustAndUser(cust CustomerDomain) (*Login, *errs.AppError) {
+// func (c authRepository) CreateCustAndUser(cust CustomerDomain) (*Login, *errs.AppError) {
+func (c authRepository) CreateCustAndUser(cust CustomerDomain) *errs.AppError {
 
-	var login Login
+	// var login Login
 
 	tx, err := c.client.Begin()
 	if err != nil {
-		return nil, NewInternalServerError("Unexpected database error")
+		// return nil, errs.NewInternalServerError("Unexpected database error")
+		return errs.NewInternalServerError("Unexpected database error")
 	}
 
 	// insert into customer table first
-
-	// insert into user table(using the id from customer table)
-	result, errEx := tx.Exec(`INSERT INTO users (username, password, role, customer_id) values (?,?,?,?)`, username, password, "user", "--CustomerId--")
-
-	// c.FindBy(username, password string) and get back the token
-	// return the token
-
-	// make sure it rollback all queries in case of one fail
+	fmt.Printf("%v\n", cust)
+	result, errEx := tx.Exec(`INSERT INTO customers (name, date_of_birth, city, zipcode) values (?,?,?,?)`, cust.Name, cust.DateOfBirth, cust.City, cust.ZipCode)
 	if errEx != nil {
-		tx.Rollback()
-		logger.Error("Error while craeting a new user" + errEx.Error())
-		return nil, NewInternalServerError("Unexpected database error")
+		logger.Error("Unexpected database err at insert cutomer" + errEx.Error())
+		// return nil, errs.NewInternalServerError("Unexpected database error")
+		return errs.NewInternalServerError("Unexpected database error")
 	}
+
+	fmt.Printf("from db the result: %v\n", result)
+	return nil
+	// // insert into user table(using the id from customer table)
+	// result, errEx := tx.Exec(`INSERT INTO users (username, password, role, customer_id) values (?,?,?,?)`, username, password, "user", "--CustomerId--")
+
+	// // c.FindBy(username, password string) and get back the token
+	// // return the token
+
+	// // make sure it rollback all queries in case of one fail
+	// if errEx != nil {
+	// 	tx.Rollback()
+	// 	logger.Error("Error while craeting a new user" + errEx.Error())
+	// 	return nil, NewInternalServerError("Unexpected database error")
+	// }
 
 }
 

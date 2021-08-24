@@ -1,14 +1,15 @@
 package domain
 
 import (
-	"time"
+// "time"
 )
 
 type CustomerDomain struct {
-	Name        string
-	DateOfBirth time.Time
+	Name string
+	// DateOfBirth time.Time
+	DateOfBirth string
 	City        string
-	ZipCode     int
+	ZipCode     string
 	Username    string
 	Password    string
 }
