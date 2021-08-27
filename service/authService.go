@@ -7,6 +7,7 @@ import (
 	"github.com/djedjethai/bankingAuth/dto"
 	"github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
+	// "time"
 )
 
 type AuthService interface {
@@ -88,6 +89,7 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 
 // func (s *authService) signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
 func (s *authService) Signup(sr dto.SignupRequest) *errs.AppError {
+	fmt.Println("alllo")
 
 	// check user input
 	if err := sr.ValidNewUser(); err != nil {
@@ -99,6 +101,7 @@ func (s *authService) Signup(sr dto.SignupRequest) *errs.AppError {
 		return err
 	}
 
+	fmt.Println("alllo2")
 	// check if username is avaible, I SHOULD CHECK OTHER CREDENTIAL, but i don't
 	usernameExist, err := s.repo.IsUsernameExist(sr.Username)
 	if err != nil {
@@ -110,6 +113,17 @@ func (s *authService) Signup(sr dto.SignupRequest) *errs.AppError {
 		return err
 	}
 
+	fmt.Println("alllo2")
+	// updatedAt, _ := time.Parse(time.RFC3339, sr.DateOfBirth)
+	// updatedAt, _ := time.Parse("2006-01-02", sr.DateOfBirth)
+	// setDateFor := updatedAt.Format("2006-01-02")
+	// if appErr != nil {
+	// fmt.Println(setDateFor)
+	// return errs.NewValidationError("Wrong date of birth ")
+	// }
+	// fmt.Println("alllo5", updatedAt)
+	// format := updatedAt.Format("2006-01-02")
+	// fmt.Println("alllo6", format)
 	// create customer
 	custDom := domain.CustomerDomain{
 		Name:        sr.Name,
@@ -122,6 +136,7 @@ func (s *authService) Signup(sr dto.SignupRequest) *errs.AppError {
 
 	// create User(username, need the id from previous req)
 	// login, err := s.repo.CreateCustAndUser(custDom)
+	fmt.Printf("in service create cust bf domain: %v\n", custDom)
 	err = s.repo.CreateCustAndUser(custDom)
 	if err != nil {
 		return err

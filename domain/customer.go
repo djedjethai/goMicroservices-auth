@@ -5,8 +5,7 @@ import (
 )
 
 type CustomerDomain struct {
-	Name string
-	// DateOfBirth time.Time
+	Name        string
 	DateOfBirth string
 	City        string
 	ZipCode     string

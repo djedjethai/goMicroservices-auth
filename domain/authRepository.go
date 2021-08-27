@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -54,29 +55,54 @@ func (c authRepository) CreateCustAndUser(cust CustomerDomain) *errs.AppError {
 	}
 
 	// insert into customer table first
-	fmt.Printf("%v\n", cust)
-	result, errEx := tx.Exec(`INSERT INTO customers (name, date_of_birth, city, zipcode) values (?,?,?,?)`, cust.Name, cust.DateOfBirth, cust.City, cust.ZipCode)
+	result, errEx := tx.Exec(`INSERT INTO customers (name, date_of_birth, city, zipcode,status) values (?,?,?,?,?)`, cust.Name, cust.DateOfBirth, cust.City, cust.ZipCode, "1")
 	if errEx != nil {
 		logger.Error("Unexpected database err at insert cutomer" + errEx.Error())
 		// return nil, errs.NewInternalServerError("Unexpected database error")
 		return errs.NewInternalServerError("Unexpected database error")
 	}
 
-	fmt.Printf("from db the result: %v\n", result)
-	return nil
+	// get the id
+	id, err := result.LastInsertId()
+	if errEx != nil {
+		logger.Error("Unexpected database err at get id previous entry" + errEx.Error())
+		// return nil, errs.NewInternalServerError("Unexpected database error")
+		return errs.NewInternalServerError("Unexpected database error")
+	}
+
+	fmt.Printf("from db the result: %v\n", id)
+	// return nil
 	// // insert into user table(using the id from customer table)
-	// result, errEx := tx.Exec(`INSERT INTO users (username, password, role, customer_id) values (?,?,?,?)`, username, password, "user", "--CustomerId--")
+	result, errEx = tx.Exec(`INSERT INTO users (username, password, role, customer_id) values (?,?,?,?)`, cust.Username, cust.Password, "user", id)
+	if errEx != nil {
+		logger.Error("Unexpected database err at insert cutomer" + errEx.Error())
+		// return nil, errs.NewInternalServerError("Unexpected database error")
+		return errs.NewInternalServerError("Unexpected database error")
+	}
 
-	// // c.FindBy(username, password string) and get back the token
-	// // return the token
+	// make sure the 2 previous query has been executed, or rollback
+	errEx = tx.Commit()
+	if errEx != nil {
+		tx.Rollback()
+		logger.Error("Error while commit transaction create new customer" + errEx.Error())
+		// return nil, NewInternalServerError("Unexpected database error")
+		return errs.NewInternalServerError("Unexpected database error")
+	}
 
-	// // make sure it rollback all queries in case of one fail
-	// if errEx != nil {
-	// 	tx.Rollback()
-	// 	logger.Error("Error while craeting a new user" + errEx.Error())
-	// 	return nil, NewInternalServerError("Unexpected database error")
+	// PAS CA QU ON  VEUT, ICI ON GENERE LE TOKEN SI POSSIBLE,
+	// SINON ON GENERE FROM SERVICE, USING EXISTING LOGIC
+	// login, errTk := c.FindBy(cust.Username, cust.Password)
+	// if errTk != nil {
+	// 	logger.Error("Error while generate token for new customer" + errEx.Error())
+	// 	// return nil, NewInternalServerError("Unexpected database error")
+	// 	return errs.NewInternalServerError("Unexpected database error")
+
 	// }
 
+	// the token to return
+	// fmt.Println("the token ooook coool: ", login)
+
+	return nil
 }
 
 func (c authRepository) IsUsernameExist(username string) (bool, *errs.AppError) {
