@@ -14,7 +14,7 @@ type AuthService interface {
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Verify(map[string]string) *errs.AppError
 	Refresh(dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError)
-	Signup(dto.SignupRequest) *errs.AppError
+	Signup(dto.SignupRequest) (*dto.LoginResponse, *errs.AppError)
 }
 
 type authService struct {
@@ -31,7 +31,6 @@ func (s *authService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginRespon
 		if vErr.Errors == jwt.ValidationErrorExpired {
 			// continue with the refresh token functionality
 			var appErr *errs.AppError
-			fmt.Printf("the teeest: %v\n", request.RefreshToken)
 
 			if appErr = s.repo.RefreshTokenExists(request.RefreshToken); appErr != nil {
 				return nil, appErr
@@ -88,42 +87,27 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 }
 
 // func (s *authService) signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
-func (s *authService) Signup(sr dto.SignupRequest) *errs.AppError {
-	fmt.Println("alllo")
+func (s *authService) Signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
 
 	// check user input
 	if err := sr.ValidNewUser(); err != nil {
-		// return nil, err
-		return err
+		return nil, err
 	}
 	if err := sr.ValidNameDobCityZip(); err != nil {
-		// return nil, err
-		return err
+		return nil, err
 	}
 
-	fmt.Println("alllo2")
 	// check if username is avaible, I SHOULD CHECK OTHER CREDENTIAL, but i don't
 	usernameExist, err := s.repo.IsUsernameExist(sr.Username)
 	if err != nil {
 		// return nil, err
-		return err
+		return nil, err
 	}
-	if !usernameExist {
+	if usernameExist {
 		// return nil, errs.NewValidationError("Username is not available")
-		return err
+		return nil, errs.NewValidationError("Invalid username")
 	}
 
-	fmt.Println("alllo2")
-	// updatedAt, _ := time.Parse(time.RFC3339, sr.DateOfBirth)
-	// updatedAt, _ := time.Parse("2006-01-02", sr.DateOfBirth)
-	// setDateFor := updatedAt.Format("2006-01-02")
-	// if appErr != nil {
-	// fmt.Println(setDateFor)
-	// return errs.NewValidationError("Wrong date of birth ")
-	// }
-	// fmt.Println("alllo5", updatedAt)
-	// format := updatedAt.Format("2006-01-02")
-	// fmt.Println("alllo6", format)
 	// create customer
 	custDom := domain.CustomerDomain{
 		Name:        sr.Name,
@@ -136,15 +120,26 @@ func (s *authService) Signup(sr dto.SignupRequest) *errs.AppError {
 
 	// create User(username, need the id from previous req)
 	// login, err := s.repo.CreateCustAndUser(custDom)
-	fmt.Printf("in service create cust bf domain: %v\n", custDom)
-	err = s.repo.CreateCustAndUser(custDom)
+	var login *domain.Login
+	login, err = s.repo.CreateCustAndUser(custDom)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
 
-	// return use previous credential to login using the following method
+	claims := login.ClaimsForAccessToken()
+	authToken := domain.NewAuthToken(claims)
 
+	var accessToken, refreshToken string
+	if accessToken, err = authToken.NewAccessToken(); err != nil {
+		return nil, err
+	}
+
+	fmt.Println(accessToken)
+	if refreshToken, err = s.repo.GenerateAndSaveRefreshTokenToStore(authToken); err != nil {
+		return nil, err
+	}
+
+	return &dto.LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
 func (s *authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {

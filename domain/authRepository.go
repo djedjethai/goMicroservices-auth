@@ -14,7 +14,7 @@ type AuthRepository interface {
 	GenerateAndSaveRefreshTokenToStore(AuthToken) (string, *errs.AppError)
 	RefreshTokenExists(string) *errs.AppError
 	IsUsernameExist(string) (bool, *errs.AppError)
-	CreateCustAndUser(CustomerDomain) *errs.AppError
+	CreateCustAndUser(CustomerDomain) (*Login, *errs.AppError)
 }
 
 type authRepository struct {
@@ -44,14 +44,12 @@ func (c authRepository) RefreshTokenExists(refreshToken string) *errs.AppError {
 
 // here not goood need add to customer table first then user table:wq
 // func (c authRepository) CreateCustAndUser(cust CustomerDomain) (*Login, *errs.AppError) {
-func (c authRepository) CreateCustAndUser(cust CustomerDomain) *errs.AppError {
-
-	// var login Login
+func (c authRepository) CreateCustAndUser(cust CustomerDomain) (*Login, *errs.AppError) {
 
 	tx, err := c.client.Begin()
 	if err != nil {
 		// return nil, errs.NewInternalServerError("Unexpected database error")
-		return errs.NewInternalServerError("Unexpected database error")
+		return nil, errs.NewInternalServerError("Unexpected database error")
 	}
 
 	// insert into customer table first
@@ -59,7 +57,7 @@ func (c authRepository) CreateCustAndUser(cust CustomerDomain) *errs.AppError {
 	if errEx != nil {
 		logger.Error("Unexpected database err at insert cutomer" + errEx.Error())
 		// return nil, errs.NewInternalServerError("Unexpected database error")
-		return errs.NewInternalServerError("Unexpected database error")
+		return nil, errs.NewInternalServerError("Unexpected database error")
 	}
 
 	// get the id
@@ -67,7 +65,7 @@ func (c authRepository) CreateCustAndUser(cust CustomerDomain) *errs.AppError {
 	if errEx != nil {
 		logger.Error("Unexpected database err at get id previous entry" + errEx.Error())
 		// return nil, errs.NewInternalServerError("Unexpected database error")
-		return errs.NewInternalServerError("Unexpected database error")
+		return nil, errs.NewInternalServerError("Unexpected database error")
 	}
 
 	fmt.Printf("from db the result: %v\n", id)
@@ -77,7 +75,7 @@ func (c authRepository) CreateCustAndUser(cust CustomerDomain) *errs.AppError {
 	if errEx != nil {
 		logger.Error("Unexpected database err at insert cutomer" + errEx.Error())
 		// return nil, errs.NewInternalServerError("Unexpected database error")
-		return errs.NewInternalServerError("Unexpected database error")
+		return nil, errs.NewInternalServerError("Unexpected database error")
 	}
 
 	// make sure the 2 previous query has been executed, or rollback
@@ -86,25 +84,23 @@ func (c authRepository) CreateCustAndUser(cust CustomerDomain) *errs.AppError {
 		tx.Rollback()
 		logger.Error("Error while commit transaction create new customer" + errEx.Error())
 		// return nil, NewInternalServerError("Unexpected database error")
-		return errs.NewInternalServerError("Unexpected database error")
+		return nil, errs.NewInternalServerError("Unexpected database error")
 	}
 
-	// PAS CA QU ON  VEUT, ICI ON GENERE LE TOKEN SI POSSIBLE,
-	// SINON ON GENERE FROM SERVICE, USING EXISTING LOGIC
-	// login, errTk := c.FindBy(cust.Username, cust.Password)
-	// if errTk != nil {
-	// 	logger.Error("Error while generate token for new customer" + errEx.Error())
-	// 	// return nil, NewInternalServerError("Unexpected database error")
-	// 	return errs.NewInternalServerError("Unexpected database error")
+	// get the login cutomer and return it
+	login, errTk := c.FindBy(cust.Username, cust.Password)
+	if errTk != nil {
+		logger.Error("Error while generate token for new customer" + errEx.Error())
+		// return nil, NewInternalServerError("Unexpected database error")
+		return nil, errs.NewInternalServerError("Unexpected database error")
 
-	// }
+	}
 
-	// the token to return
-	// fmt.Println("the token ooook coool: ", login)
-
-	return nil
+	return login, nil
 }
 
+// here we check only username for the sake of simplicity
+// could check the name and more .....
 func (c authRepository) IsUsernameExist(username string) (bool, *errs.AppError) {
 	var name string
 
@@ -112,13 +108,13 @@ func (c authRepository) IsUsernameExist(username string) (bool, *errs.AppError) 
 	err := c.client.Get(&name, sqlVerify, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return true, nil
+			return false, nil
 		} else {
 			return false, errs.NewInternalServerError("Unexpected database error")
 		}
 	}
 
-	return false, nil
+	return true, nil
 }
 
 func (c authRepository) FindBy(username, password string) (*Login, *errs.AppError) {

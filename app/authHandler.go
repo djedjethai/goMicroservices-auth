@@ -2,7 +2,7 @@ package app
 
 import (
 	"encoding/json"
-	// "fmt"
+	"fmt"
 	"github.com/djedjethai/bankingAuth/dto"
 	// "github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
@@ -20,11 +20,12 @@ func (h authHandler) addCustomer(w http.ResponseWriter, r *http.Request) {
 		logger.Error("error when new customer signup")
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		appErr := h.service.Signup(signupRequest)
-		if err != nil {
+		token, appErr := h.service.Signup(signupRequest)
+		if appErr != nil {
+			fmt.Println("grrree 2: ", appErr)
 			writeResponse(w, appErr.Code, appErr.AsMessage())
 		} else {
-			writeResponse(w, http.StatusOK, "test RAS")
+			writeResponse(w, http.StatusOK, token)
 		}
 	}
 }
