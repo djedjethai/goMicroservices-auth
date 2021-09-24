@@ -2,7 +2,7 @@ package app
 
 import (
 	"encoding/json"
-	// "fmt"
+	"fmt"
 	"github.com/djedjethai/bankingAuth/dto"
 	// "github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
@@ -12,6 +12,37 @@ import (
 
 type authHandler struct {
 	service service.AuthService
+}
+
+func (h authHandler) addCustomer(w http.ResponseWriter, r *http.Request) {
+	var signupRequest dto.SignupRequest
+	if err := json.NewDecoder(r.Body).Decode(&signupRequest); err != nil {
+		logger.Error("error when new customer signup")
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		token, appErr := h.service.Signup(signupRequest)
+		if appErr != nil {
+			fmt.Println("grrree 2: ", appErr)
+			writeResponse(w, appErr.Code, appErr.AsMessage())
+		} else {
+			writeResponse(w, http.StatusOK, token)
+		}
+	}
+}
+
+func (h authHandler) refresh(w http.ResponseWriter, r *http.Request) {
+	var refreshRequest dto.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&refreshRequest); err != nil {
+		logger.Error("Error while decoding refresh token request" + err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		token, appErr := h.service.Refresh(refreshRequest)
+		if appErr != nil {
+			writeResponse(w, appErr.Code, appErr.AsMessage())
+		} else {
+			writeResponse(w, http.StatusOK, *token)
+		}
+	}
 }
 
 func (h authHandler) verify(w http.ResponseWriter, r *http.Request) {

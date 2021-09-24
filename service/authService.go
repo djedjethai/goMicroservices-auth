@@ -7,11 +7,14 @@ import (
 	"github.com/djedjethai/bankingAuth/dto"
 	"github.com/djedjethai/bankingAuth/errs"
 	"github.com/djedjethai/bankingAuth/logger"
+	// "time"
 )
 
 type AuthService interface {
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Verify(map[string]string) *errs.AppError
+	Refresh(dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError)
+	Signup(dto.SignupRequest) (*dto.LoginResponse, *errs.AppError)
 }
 
 type authService struct {
@@ -21,6 +24,28 @@ type authService struct {
 
 func NewService(db domain.AuthRepository, permissions domain.RolePermissions) *authService {
 	return &authService{db, permissions}
+}
+
+func (s *authService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError) {
+	if vErr := request.IsAccessTokenValid(); vErr != nil {
+		if vErr.Errors == jwt.ValidationErrorExpired {
+			// continue with the refresh token functionality
+			var appErr *errs.AppError
+
+			if appErr = s.repo.RefreshTokenExists(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+
+			// generate a access token from refresh token
+			var accessToken string
+			if accessToken, appErr = domain.NewAccessTokenFromRefreshToken(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+			return &dto.LoginResponse{AccessToken: accessToken}, nil
+		}
+		return nil, errs.NewAuthenticationError("invalide token")
+	}
+	return nil, errs.NewAuthenticationError("cannot generate a new token before the current one expire")
 }
 
 func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
@@ -59,6 +84,62 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 		}
 	}
 
+}
+
+// func (s *authService) signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
+func (s *authService) Signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.AppError) {
+
+	// check user input
+	if err := sr.ValidNewUser(); err != nil {
+		return nil, err
+	}
+	if err := sr.ValidNameDobCityZip(); err != nil {
+		return nil, err
+	}
+
+	// check if username is avaible, I SHOULD CHECK OTHER CREDENTIAL, but i don't
+	usernameExist, err := s.repo.IsUsernameExist(sr.Username)
+	if err != nil {
+		// return nil, err
+		return nil, err
+	}
+	if usernameExist {
+		// return nil, errs.NewValidationError("Username is not available")
+		return nil, errs.NewValidationError("Invalid username")
+	}
+
+	// create customer
+	custDom := domain.CustomerDomain{
+		Name:        sr.Name,
+		DateOfBirth: sr.DateOfBirth,
+		City:        sr.City,
+		ZipCode:     sr.ZipCode,
+		Username:    sr.Username,
+		Password:    sr.Password,
+	}
+
+	// create User(username, need the id from previous req)
+	// login, err := s.repo.CreateCustAndUser(custDom)
+	var login *domain.Login
+	login, err = s.repo.CreateCustAndUser(custDom)
+	if err != nil {
+		return nil, err
+	}
+
+	claims := login.ClaimsForAccessToken()
+	authToken := domain.NewAuthToken(claims)
+
+	var accessToken, refreshToken string
+	if accessToken, err = authToken.NewAccessToken(); err != nil {
+		return nil, err
+	}
+
+	fmt.Println(accessToken)
+	if refreshToken, err = s.repo.GenerateAndSaveRefreshTokenToStore(authToken); err != nil {
+		return nil, err
+	}
+
+	return &dto.LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
 func (s *authService) Login(lr dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
