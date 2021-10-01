@@ -10,6 +10,7 @@ import (
 	// "time"
 )
 
+//go:generate mockgen -destination=../mocks/service/mockAuthService.go -package=service github.com/djedjethai/bankingAuth/service AuthService
 type AuthService interface {
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Verify(map[string]string) *errs.AppError
