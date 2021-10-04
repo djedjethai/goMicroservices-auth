@@ -35,9 +35,130 @@ func setup(t *testing.T) func() {
 	}
 }
 
-// func Test_authHandler_refreshToken_should_return_err_if_body_is_not_json(t *testing.T){}
-// func Test_authHandler_refreshToken_should_return_err_if_service_return_an_err(t *testing.T){}
-// func Test_authHandler_refreshToken_should_return_StatusOK_if_service_refreshed_token(t *testing.T){}
+func Test_authHandler_verify_should_return_err_if_url_does_not_hold_any_params(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	router.HandleFunc("/auth/verify", ah.verify)
+	request, _ := http.NewRequest(http.MethodGet, "/auth/verify", nil)
+
+	// Act
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	// Assert
+	if recorder.Code != http.StatusForbidden {
+		t.Error("While testing authHandler verify should return an err if no params in url")
+	}
+}
+
+// BUG HERE NEED TO FIX IT.......
+func Test_authHandler_verify_should_return_err_if_service_return_err(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	// set serviceInput
+	serviceInput := make(map[string]string)
+	serviceInput["token"] = "wrongtoken"
+
+	mockService.EXPECT().Verify(serviceInput).Return(errs.NewAuthorizationError("request not verified with the token"))
+	router.HandleFunc("/auth/verify", ah.verify)
+	request, _ := http.NewRequest(http.MethodGet, "/auth/verify?token=wrongToken", nil)
+
+	// Act
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	// Assert
+	if recorder.Code != http.StatusForbidden {
+		t.Error("While testing authService verify should return an err if verifyService return an err")
+	}
+}
+
+// func Test_authHandler_verify_should_return_statusCodeOK_if_service_return_nil(t *testing.T){}
+
+func Test_authHandler_refreshToken_should_return_err_if_body_is_not_json(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	router.HandleFunc("/auth/refresh", ah.refresh)
+	request, _ := http.NewRequest(http.MethodPost, "/auth/refresh", strings.NewReader(""))
+
+	// Act
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	// Assert
+	if recorder.Code != http.StatusBadRequest {
+		t.Error("While testing authHandler refreshToken should return an err when body is not json")
+	}
+}
+
+func Test_authHandler_refreshToken_should_return_err_if_service_return_an_err(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	// set jsonInput
+	jsonInput := `{
+		"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+		"refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	}`
+	// set serviceInput
+	serviceInput := dto.RefreshTokenRequest{
+		AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+		RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+	}
+
+	router.HandleFunc("/auth/refresh", ah.refresh)
+	request, _ := http.NewRequest(http.MethodPost, "/auth/refresh", strings.NewReader(jsonInput))
+	mockService.EXPECT().Refresh(serviceInput).Return(nil, errs.NewAuthenticationError("invalid token"))
+
+	// Act
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	// Assert
+	if recorder.Code != http.StatusUnauthorized {
+		t.Error("While testing authHandler RefreshToken should return an err if token is invalid")
+	}
+}
+
+func Test_authHandler_refreshToken_should_return_StatusOK_if_service_refreshed_token(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	jsonInput := `{
+		"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+		"refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	}`
+	// set serviceInput
+	serviceInput := dto.RefreshTokenRequest{
+		AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+		RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+	}
+
+	// set serviceOutput
+	serviceOutput := dto.LoginResponse{
+		AccessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaF90b2tlbiIsImN1c3RvbWVyX2lkIjoiIiwiYWNjb3VudHMiOm51bGwsInVuIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE2MjkzODE4MjB9.dtsik_uSKfoduArFg0ZuneApz9IfNN0rOL1rS-ByuM8",
+	}
+
+	mockService.EXPECT().Refresh(serviceInput).Return(&serviceOutput, nil)
+	router.HandleFunc("/auth/refresh", ah.refresh)
+	request, _ := http.NewRequest(http.MethodPost, "/auth/refresh", strings.NewReader(jsonInput))
+	// Act
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	// Assert
+	if recorder.Code != http.StatusOK {
+		t.Error("While testing authHandler refreshToken should return statusCode ok")
+	}
+}
 
 func Test_authHandler_addCustomer_should_return_err_if_input_is_not_json(t *testing.T) {
 	tearDown := setup(t)
