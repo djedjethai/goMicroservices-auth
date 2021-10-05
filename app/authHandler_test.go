@@ -53,7 +53,6 @@ func Test_authHandler_verify_should_return_err_if_url_does_not_hold_any_params(t
 	}
 }
 
-// BUG HERE NEED TO FIX IT.......
 func Test_authHandler_verify_should_return_err_if_service_return_err(t *testing.T) {
 	tearDown := setup(t)
 	defer tearDown()
@@ -61,7 +60,7 @@ func Test_authHandler_verify_should_return_err_if_service_return_err(t *testing.
 	// Arrange
 	// set serviceInput
 	serviceInput := make(map[string]string)
-	serviceInput["token"] = "wrongtoken"
+	serviceInput["token"] = "wrongToken"
 
 	mockService.EXPECT().Verify(serviceInput).Return(errs.NewAuthorizationError("request not verified with the token"))
 	router.HandleFunc("/auth/verify", ah.verify)
@@ -77,7 +76,29 @@ func Test_authHandler_verify_should_return_err_if_service_return_err(t *testing.
 	}
 }
 
-// func Test_authHandler_verify_should_return_statusCodeOK_if_service_return_nil(t *testing.T){}
+func Test_authHandler_verify_should_return_statusCodeOK_if_service_return_nil(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	serviceInput := make(map[string]string)
+	serviceInput["token"] = "theToken"
+
+	router.HandleFunc("/auth/verify", ah.verify)
+	request, _ := http.NewRequest(http.MethodGet, "/auth/verify?token=theToken", nil)
+
+	mockService.EXPECT().Verify(serviceInput).Return(nil)
+
+	// Act
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	// Assert
+	if recorder.Code != http.StatusOK {
+		t.Error("While testing authHandler verify token should return statusCode ok")
+	}
+
+}
 
 func Test_authHandler_refreshToken_should_return_err_if_body_is_not_json(t *testing.T) {
 	tearDown := setup(t)
