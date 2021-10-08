@@ -1,8 +1,11 @@
 package dto
 
 import (
-	"fmt"
+	// "fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/djedjethai/bankingAuth/domain"
 	"testing"
+	"time"
 )
 
 func Test_dtoRefreshTokenRequest_isAccessTokenValidity_return_err_if_token_is_not_valid(t *testing.T) {
@@ -16,12 +19,39 @@ func Test_dtoRefreshTokenRequest_isAccessTokenValidity_return_err_if_token_is_no
 	// call func
 	validationErr := refreshToken.IsAccessTokenValid()
 
-	fmt.Printf("grrrr111: %v\n", validationErr)
+	// fmt.Printf("grrrr111: %v\n", validationErr)
 
 	// assert
-	if validationErr != nil {
-		t.Error("While testing dtoRefreshTokenRequest IsAccessTokenValid shoud not return an err if token is valid")
+	if validationErr == nil {
+		t.Error("While testing dtoRefreshTokenRequest IsAccessTokenValid shoud return an err if token is invalid")
 	}
 }
 
-// func Test_dtoRefreshTokenRequest_isAccessTokenValidity_return_nil_if_token_is_valid(t *testing.T){}
+func Test_dtoRefreshTokenRequest_isAccessTokenValidity_return_nil_if_token_is_valid(t *testing.T) {
+	// Arrange
+	// create a token
+	rtc := domain.AccessTokenClaims{
+		CustomerId: "2001",
+		Username:   "2001",
+		Role:       "user",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(domain.REFRESH_TOKEN_DURATION).Unix(),
+		},
+	}
+
+	// create a new and valid token
+	at := domain.NewAuthToken(rtc)
+	tkn, _ := at.Token.SignedString([]byte(domain.HMAC_SAMPLE_SECRET))
+
+	rt := RefreshTokenRequest{
+		AccessToken:  tkn,
+		RefreshToken: tkn,
+	}
+	// run func with queried token
+	errTok := rt.IsAccessTokenValid()
+
+	// assert return from func is nil
+	if errTok != nil {
+		t.Error("While testing dtoRefreshTokenValue IsAccessTokenValid should not return an err if token is valid")
+	}
+}

@@ -7,12 +7,12 @@ import (
 )
 
 type AuthToken struct {
-	token *jwt.Token
+	Token *jwt.Token
 }
 
 func NewAuthToken(claims AccessTokenClaims) AuthToken {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return AuthToken{token: token}
+	return AuthToken{Token: token}
 }
 
 func NewAccessTokenFromRefreshToken(refreshToken string) (string, *errs.AppError) {
@@ -30,7 +30,7 @@ func NewAccessTokenFromRefreshToken(refreshToken string) (string, *errs.AppError
 }
 
 func (t AuthToken) NewAccessToken() (string, *errs.AppError) {
-	signedString, err := t.token.SignedString([]byte(HMAC_SAMPLE_SECRET))
+	signedString, err := t.Token.SignedString([]byte(HMAC_SAMPLE_SECRET))
 	if err != nil {
 		logger.Error("Failed while signing access token: " + err.Error())
 		return "", errs.NewInternalServerError("cannot generate access token")
@@ -39,7 +39,7 @@ func (t AuthToken) NewAccessToken() (string, *errs.AppError) {
 }
 
 func (t AuthToken) newRefreshToken() (string, *errs.AppError) {
-	c := t.token.Claims.(AccessTokenClaims)
+	c := t.Token.Claims.(AccessTokenClaims)
 	refreshClaims := c.RefreshTokenClaims()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	signedString, err := token.SignedString([]byte(HMAC_SAMPLE_SECRET))

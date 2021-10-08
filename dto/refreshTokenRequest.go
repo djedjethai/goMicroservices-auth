@@ -26,4 +26,5 @@ func (r RefreshTokenRequest) IsAccessTokenValid() *jwt.ValidationError {
 	}
 
 	return nil
+
 }
