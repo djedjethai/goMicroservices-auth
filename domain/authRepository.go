@@ -9,6 +9,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// to run the mock: go generate ./...
+
+//go:generate mockgen -destination=../mocks/domain/mockAuthRepository.go -package=domain github.com/djedjethai/bankingAuth/domain AuthRepository
 type AuthRepository interface {
 	FindBy(string, string) (*Login, *errs.AppError)
 	GenerateAndSaveRefreshTokenToStore(AuthToken) (string, *errs.AppError)
