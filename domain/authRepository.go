@@ -145,7 +145,7 @@ func (c authRepository) GenerateAndSaveRefreshTokenToStore(authToken AuthToken) 
 	// generate the refresh token
 	var appErr *errs.AppError
 	var refreshedToken string
-	if refreshedToken, appErr = authToken.newRefreshToken(); appErr != nil {
+	if refreshedToken, appErr = authToken.NewRefreshToken(); appErr != nil {
 		return "", appErr
 	}
 

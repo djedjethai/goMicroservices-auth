@@ -38,7 +38,7 @@ func (t AuthToken) NewAccessToken() (string, *errs.AppError) {
 	return signedString, nil
 }
 
-func (t AuthToken) newRefreshToken() (string, *errs.AppError) {
+func (t AuthToken) NewRefreshToken() (string, *errs.AppError) {
 	c := t.Token.Claims.(AccessTokenClaims)
 	refreshClaims := c.RefreshTokenClaims()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
