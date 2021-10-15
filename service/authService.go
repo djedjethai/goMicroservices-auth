@@ -135,7 +135,6 @@ func (s *authService) Signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.Ap
 		return nil, err
 	}
 
-	fmt.Println(accessToken)
 	if refreshToken, err = s.repo.GenerateAndSaveRefreshTokenToStore(authToken); err != nil {
 		return nil, err
 	}
