@@ -55,9 +55,9 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 
 	// convert the string token to JWT struct
 	if jwtToken, err := jwtTokenFromString(urlParams["token"]); err != nil {
+		fmt.Printf("seee the: %v\n", err)
 		return errs.NewAuthorizationError(err.Error())
 	} else {
-
 		// cerify the expire time and signature of the token
 		if jwtToken.Valid {
 			// type cast the token claims to jwt.MapClaims
@@ -104,6 +104,7 @@ func (s *authService) Signup(sr dto.SignupRequest) (*dto.LoginResponse, *errs.Ap
 		// return nil, err
 		return nil, err
 	}
+
 	if usernameExist {
 		// return nil, errs.NewValidationError("Username is not available")
 		return nil, errs.NewValidationError("Invalid username")

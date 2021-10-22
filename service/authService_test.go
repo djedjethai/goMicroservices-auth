@@ -2,6 +2,8 @@ package service
 
 import (
 	// 	"github.com/dgrijalva/jwt-go"
+	// "fmt"
+	"github.com/dgrijalva/jwt-go"
 	realDomain "github.com/djedjethai/bankingAuth/domain"
 	"github.com/djedjethai/bankingAuth/dto"
 	"github.com/djedjethai/bankingAuth/errs"
@@ -9,7 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"net/http"
 	"testing"
-	// 	"time"
+	"time"
 )
 
 var mockRepo *domain.MockAuthRepository
@@ -31,6 +33,146 @@ func setup(t *testing.T) func() {
 	}
 }
 
+// ============= REFRESH ==============
+
+// func Test_authService_referesh_return_an_err_if_token_is_not_expired_yet(t *testing.T){}
+// func Test_authService_referesh_return_an_err_if_token_is_invalid(t *testing.T){}
+// func Test_authService_referesh_return_an_err_if_domain.newAccessTokenFromRefreshToken_return_an_err(t *testing.T){}
+// func Test_authService_referesh_should_not_return_an_err(t *testing.T){}
+
+// ============= VERIFY ================
+func Test_authService_verify_return_an_err_if_the_map_token_key_is_incorrect(t *testing.T) {
+	// Arrange
+	tearDown := setup(t)
+	defer tearDown()
+
+	urlParams := make(map[string]string)
+	urlParams["token"] = "wrongToken"
+
+	// Act
+	err := service.Verify(urlParams)
+
+	// Assert
+	if err.Message != "token contains an invalid number of segments" {
+		t.Error("While testing authService, Verify() should return an err if token is invalid ")
+	}
+}
+
+func Test_authService_verify_return_an_err_if_urlParamsToken_is_expired(t *testing.T) {
+	// Arrange
+	tearDown := setup(t)
+	defer tearDown()
+
+	urlParams := make(map[string]string)
+
+	// expired token
+	urlParams["token"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaF90b2tlbiIsImN1c3RvbWVyX2lkIjoiIiwiYWNjb3VudHMiOm51bGwsInVuIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE2MjkzODE4MjB9.dtsik_uSKfoduArFg0ZuneApz9IfNN0rOL1rS-ByuM8"
+
+	// Act
+	err := service.Verify(urlParams)
+
+	// Assert
+	if err.Code != http.StatusForbidden {
+		t.Error("While testing authService, Verify() should return an err if token is invalid ")
+	}
+}
+
+func Test_authService_verify_return_an_err_if_userRole_and_IsRequestVerifiedWithTokenClaims_is_false(t *testing.T) {
+	// Arrange
+	tearDown := setup(t)
+	defer tearDown()
+
+	urlParams := make(map[string]string)
+
+	// create a valid token
+	claim := realDomain.AccessTokenClaims{
+		CustomerId: "2001",
+		Username:   "2001",
+		Role:       "wronguser",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(realDomain.ACCESS_TOKEN_DURATION).Unix(),
+		},
+	}
+	authToken := realDomain.NewAuthToken(claim)
+	token, _ := authToken.NewAccessToken()
+
+	urlParams["token"] = token
+
+	// Act
+	err := service.Verify(urlParams)
+
+	// Assert
+	if err.Message != "wronguser role is not authorized" {
+		t.Error("While testing authService, if wrong userRole, Verify() should return an err")
+	}
+
+}
+
+func Test_authService_verify_return_an_err_if_token_is_valid_but_is_not_authorized(t *testing.T) {
+	// Arrange
+	tearDown := setup(t)
+	defer tearDown()
+
+	urlParams := make(map[string]string)
+
+	// create a valid token
+	claim := realDomain.AccessTokenClaims{
+		CustomerId: "2001",
+		Username:   "2001",
+		Role:       "user",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(realDomain.ACCESS_TOKEN_DURATION).Unix(),
+		},
+	}
+	authToken := realDomain.NewAuthToken(claim)
+	token, _ := authToken.NewAccessToken()
+
+	urlParams["token"] = token
+	urlParams["customer_id"] = "wrong"
+
+	// Act
+	err := service.Verify(urlParams)
+
+	// Assert
+	if err.Message != "request not verified with the token" {
+		t.Error("While testing authService, if wrong userRole, Verify() should return an err")
+	}
+}
+
+func Test_authService_verify_does_not_return_any_err(t *testing.T) {
+	// Arrange
+	tearDown := setup(t)
+	defer tearDown()
+
+	urlParams := make(map[string]string)
+
+	// create a valid token
+	claim := realDomain.AccessTokenClaims{
+		CustomerId: "2001",
+		Username:   "2001",
+		Role:       "admin",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(realDomain.ACCESS_TOKEN_DURATION).Unix(),
+		},
+	}
+	authToken := realDomain.NewAuthToken(claim)
+	token, _ := authToken.NewAccessToken()
+
+	urlParams["token"] = token
+	urlParams["customer_id"] = "2001"
+	urlParams["routeName"] = "GetCustomer"
+
+	// Act
+	err := service.Verify(urlParams)
+
+	// Assert
+	if err != nil {
+		t.Error("While testing authService, Verify() should not return any err")
+	}
+
+}
+
+// ============= SIGNUP ================
 // test 2 methods ValidUsername and ValidNameDobCityZip
 func Test_authService_signup_should_return_an_err_if_checkUserInput_is_incorrect(t *testing.T) {
 	tearDown := setup(t)
@@ -124,13 +266,6 @@ func Test_authService_signup_return_an_err_if_IfUsernameExist_query_return_an_er
 	}
 }
 
-// func Test_authService_signup_return_an_err_if_query_IsUserName_return_an_err(t *testing.T){
-// 	tearDown := setup(t)
-// 	defer tearDown()
-//
-// 	// Arrange
-// }
-
 func Test_authService_signup_return_an_err_if_query_CreateCustAndUser_return_an_err(t *testing.T) {
 	tearDown := setup(t)
 	defer tearDown()
@@ -167,57 +302,6 @@ func Test_authService_signup_return_an_err_if_query_CreateCustAndUser_return_an_
 		t.Error("While testing authService signup should return an err if CreateCustAndUser query return an err")
 	}
 }
-
-// A FINIR
-// func Test_authService_signup_return_an_err_if_authTokenNewAccessToken_return_an_err(t *testing.T) {
-// 	tearDown := setup(t)
-// 	defer tearDown()
-//
-// 	// Arrange
-// 	sr := dto.SignupRequest{
-// 		Name:         "jerome",
-// 		DateOfBirth:  "1972-05-03",
-// 		City:         "madrid",
-// 		ZipCode:      "10000",
-// 		Username:     "myusername",
-// 		Password:     "password",
-// 		PasswordConf: "password",
-// 	}
-//
-// 	cd := realDomain.CustomerDomain{
-// 		Name:        sr.Name,
-// 		DateOfBirth: sr.DateOfBirth,
-// 		City:        sr.City,
-// 		ZipCode:     sr.ZipCode,
-// 		Username:    sr.Username,
-// 		Password:    sr.Password,
-// 	}
-//
-// 	// should provoc an err
-// 	lgi := realDomain.Login{
-// 		Username: "2001",
-// 		Role: "user",
-// 	}
-//
-// 	mockRepo.EXPECT().IsUsernameExist("myusername").Return(false, nil)
-//
-// 	mockRepo.EXPECT().CreateCustAndUser(cd).Return(&lgi, nil)
-//
-// 	// claims := lgi.ClaimsForAccessToken()
-// 	// authToken := realDomain.NewAuthToken(claims)
-//
-// 	// NEED TO BE MOCK TO TEST IF IN CASE OF ERR THE FUNC RETURN THE ERR
-// 	// _, err1 := authToken.NewAccessToken()
-//
-// 	// Act
-// 	_, err := service.Signup(sr)
-//
-// 	// Assert
-// 	if err.Code != http.StatusInternalServerError {
-// 		t.Error("While testing authService signup should return an err if CreateCustAndUser query return an err")
-// 	}
-//
-// }
 
 func Test_authService_signup_return_an_err_if_GenerateAndSaveRfereshTokenToStore_return_an_err(t *testing.T) {
 	tearDown := setup(t)
@@ -267,7 +351,6 @@ func Test_authService_signup_return_an_err_if_GenerateAndSaveRfereshTokenToStore
 	}
 }
 
-// TO FINISHHH
 func Test_authService_signup_do_not_return_an_err_(t *testing.T) {
 	tearDown := setup(t)
 	defer tearDown()
@@ -305,19 +388,21 @@ func Test_authService_signup_do_not_return_an_err_(t *testing.T) {
 	claims := lgi.ClaimsForAccessToken()
 	authToken := realDomain.NewAuthToken(claims)
 
-	// TO FINISH HERE RETURN NO ERRRRRRRR
-	mockRepo.EXPECT().GenerateAndSaveRefreshTokenToStore(authToken).Return()
+	// generate a refreshed token to be return from GenerateAndSave...
+	rft, _ := authToken.NewRefreshToken()
+
+	mockRepo.EXPECT().GenerateAndSaveRefreshTokenToStore(authToken).Return(rft, nil)
 
 	// Act
 	_, err := service.Signup(sr)
 
 	// Assert
-	if err.Code != http.StatusInternalServerError {
-		t.Error("While testing authService signup should return an err if CreateCustAndUser query return an err")
+	if err != nil {
+		t.Error("While testing authService signup should not return an err")
 	}
-
 }
 
+// ============= LOGIN ================
 func Test_authService_login_return_an_err_if_domainReq_findById_return_err(t *testing.T) {
 	tearDown := setup(t)
 	defer tearDown()

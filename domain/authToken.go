@@ -6,6 +6,15 @@ import (
 	"github.com/djedjethai/bankingAuth/logger"
 )
 
+// // to run the mock: go generate ./...
+//
+// //go:generate mockgen -destination=../mocks/domain/mockAuthToken.go -package=domain github.com/djedjethai/bankingAuth/domain AuthTokenInterface
+// type AuthTokenInterface interface {
+// 	NewAccessTokenFromRefreshToken(string) (string, *errs.AppError)
+// 	NewAccessToken() (string, *errs.AppError)
+// 	NewRefreshToken() (string, *errs.AppError)
+// }
+
 type AuthToken struct {
 	Token *jwt.Token
 }
