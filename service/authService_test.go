@@ -35,10 +35,95 @@ func setup(t *testing.T) func() {
 
 // ============= REFRESH ==============
 
-// func Test_authService_referesh_return_an_err_if_token_is_not_expired_yet(t *testing.T){}
-// func Test_authService_referesh_return_an_err_if_token_is_invalid(t *testing.T){}
-// func Test_authService_referesh_return_an_err_if_domain.newAccessTokenFromRefreshToken_return_an_err(t *testing.T){}
-// func Test_authService_referesh_should_not_return_an_err(t *testing.T){}
+func Test_authService_referesh_return_an_err_if_token_is_not_expired_yet(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	claim := realDomain.AccessTokenClaims{
+		CustomerId: "2001",
+		Username:   "2001",
+		Role:       "user",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(realDomain.ACCESS_TOKEN_DURATION).Unix(),
+		},
+	}
+	authToken := realDomain.NewAuthToken(claim)
+	token, _ := authToken.NewAccessToken()
+
+	refreshedTokenReq := dto.RefreshTokenRequest{AccessToken: token}
+
+	// Act
+	_, err := service.Refresh(refreshedTokenReq)
+
+	// Assert
+	if err.Message != "cannot generate a new token before the current one expire" {
+		t.Error("While testing authService Refresh should return an err if token is still not expire")
+	}
+
+}
+
+func Test_authService_referesh_return_an_err_if_token_is_invalid(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	rt := dto.RefreshTokenRequest{AccessToken: "invalidToken"}
+
+	// Act
+	_, err := service.Refresh(rt)
+
+	// Assert
+	if err.Message != "invalide token" {
+		t.Error("While testing authService refresh() should return an err if token is invalid")
+	}
+}
+
+func Test_authService_referesh_return_an_err_if_domain_newAccessTokenFromRefreshToken_return_an_err(t *testing.T) {
+	tearDown := setup(t)
+	defer tearDown()
+
+	// Arrange
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaF90b2tlbiIsImN1c3RvbWVyX2lkIjoiIiwiYWNjb3VudHMiOm51bGwsInVuIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE2MjkzODE4MjB9.dtsik_uSKfoduArFg0ZuneApz9IfNN0rOL1rS-ByuM8"
+
+	rt := dto.RefreshTokenRequest{AccessToken: token, RefreshToken: token}
+
+	mockRepo.EXPECT().RefreshTokenExists(rt.RefreshToken).Return(errs.NewNotFoundError("not found"))
+
+	// Act
+	_, err := service.Refresh(rt)
+
+	// Assert
+	if err.Code != http.StatusNotFound {
+		t.Error("While testing authService refresh() should return an err if domain.newAccessTokenFromRefreshToken() return one")
+	}
+}
+
+// A FINIR(return): ahhhh: &{401 invalid or expired refresh token}
+// If i generate a new one it's still valid and return an err
+// If expire return an err, so how should be the token to be renew ???
+// func Test_authService_referesh_should_not_return_an_err(t *testing.T) {
+// 	tearDown := setup(t)
+// 	defer tearDown()
+//
+// 	// Arrange
+// 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaF90b2tlbiIsImN1c3RvbWVyX2lkIjoiIiwiYWNjb3VudHMiOm51bGwsInVuIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE2MjkzODE4MjB9.dtsik_uSKfoduArFg0ZuneApz9IfNN0rOL1rS-ByuM8"
+//
+// 	rt := dto.RefreshTokenRequest{AccessToken: token, RefreshToken: token}
+//
+// 	mockRepo.EXPECT().RefreshTokenExists(rt.RefreshToken).Return(nil)
+//
+// 	// Act
+// 	ret, err := service.Refresh(rt)
+//
+// 	fmt.Printf("ahhhh: %v\n", err)
+// 	fmt.Printf("ahhhh222: %v\n", ret)
+//
+// 	// Assert
+// 	if err != nil {
+// 		t.Error("While testing authService refresh() sould not return any err")
+// 	}
+// }
 
 // ============= VERIFY ================
 func Test_authService_verify_return_an_err_if_the_map_token_key_is_incorrect(t *testing.T) {
