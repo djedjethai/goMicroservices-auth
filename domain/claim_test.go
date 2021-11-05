@@ -23,7 +23,7 @@ func Test_claim_IsUserRole_return_true_if_role_user_and_false_if_not(t *testing.
 	}
 }
 
-func Test_claim_IsUserRole_return_true_customerId_is_valid_and_false_if_not(t *testing.T) {
+func Test_claim_IsValidCustomerId_return_true_customerId_is_valid_and_false_if_not(t *testing.T) {
 	// Assert
 	goodId := AccessTokenClaims{CustomerId: "2001"}
 	badId := AccessTokenClaims{CustomerId: "200155"}
@@ -43,7 +43,7 @@ func Test_claim_IsUserRole_return_true_customerId_is_valid_and_false_if_not(t *t
 
 }
 
-func Test_claim_IsUserRole_return_false_if_account_not_found_and_true_if_it_is(t *testing.T) {
+func Test_claim_IsValidAccountId_return_false_if_account_not_found_and_true_if_it_is(t *testing.T) {
 	// Assert
 	act := AccessTokenClaims{Accounts: []string{"1111", "2222"}}
 
@@ -63,7 +63,32 @@ func Test_claim_IsUserRole_return_false_if_account_not_found_and_true_if_it_is(t
 }
 
 // A FINIR
-// func Test_claim_IsUserRole_return_false_if_customerId_or_accountId_are_incorrect(t *testing.T){
-	
+func Test_claim_IsRequestVerifiedWithTokenClaims_return_false_CustumerId_or_IsValidAccountId_return_false_or_true_if_all_match(t *testing.T) {
+	// Arrange
+	cid := AccessTokenClaims{CustomerId: "10002", Accounts: []string{"0000"}}
+	aid := AccessTokenClaims{CustomerId: "10000", Accounts: []string{"1111", "2222"}}
+	caid := AccessTokenClaims{CustomerId: "10000", Accounts: []string{"0000"}}
+
+	urlPar := make(map[string]string)
+	urlPar["customer_id"] = "10000"
+	urlPar["account_id"] = "0000"
+
+	// Act
+	custId := cid.IsRequestVerifiedWithTokenClaims(urlPar)
+	accId := aid.IsRequestVerifiedWithTokenClaims(urlPar)
+	custAccId := caid.IsRequestVerifiedWithTokenClaims(urlPar)
+
+	// Assert
+	if custId != false {
+		t.Error("When testing Claim IsRequestVerifiedWithTokenClaims should return false if CustomerId does not match")
+	}
+
+	if accId != false {
+		t.Error("When testing Claim IsRequestVerifiedWithTokenClaims should return false if AccountId does not match")
+	}
+
+	if custAccId != true {
+		t.Error("When testing Claim IsRequestVerifiedWithTokenClaims should return true if AccountId and CustomerId match")
+	}
+
 }
-// func Test_claim_IsUserRole_return_true_if_customerId_or_accountId_are_correct(t *testing.T)
