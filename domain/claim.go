@@ -57,7 +57,6 @@ func (c AccessTokenClaims) IsRequestVerifiedWithTokenClaims(urlParams map[string
 	logger.Info("In IsRequestVerifiedWithTokenClaims: " + fmt.Sprintf("%v", urlParams))
 
 	if c.CustomerId != urlParams["customer_id"] {
-
 		logger.Info("CustomerId in verify token claim" + c.CustomerId)
 		return false
 	}
