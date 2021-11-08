@@ -2,8 +2,8 @@ package domain
 
 import (
 	"github.com/dgrijalva/jwt-go"
-	"github.com/djedjethai/bankingAuth/errs"
-	"github.com/djedjethai/bankingAuth/logger"
+	"github.com/djedjethai/bankingLib/errs"
+	"github.com/djedjethai/bankingLib/logger"
 )
 
 // // to run the mock: go generate ./...

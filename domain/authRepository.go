@@ -3,8 +3,8 @@ package domain
 import (
 	"database/sql"
 	"fmt"
-	"github.com/djedjethai/bankingAuth/errs"
-	"github.com/djedjethai/bankingAuth/logger"
+	"github.com/djedjethai/bankingLib/errs"
+	"github.com/djedjethai/bankingLib/logger"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/djedjethai/bankingAuth/dto"
 	// "github.com/djedjethai/bankingAuth/errs"
-	"github.com/djedjethai/bankingAuth/logger"
 	"github.com/djedjethai/bankingAuth/service"
+	"github.com/djedjethai/bankingLib/logger"
 	"net/http"
 )
 

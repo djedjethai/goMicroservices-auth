@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/djedjethai/bankingAuth/app"
-	"github.com/djedjethai/bankingAuth/logger"
+	"github.com/djedjethai/bankingLib/logger"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package domain
 import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/djedjethai/bankingAuth/logger"
+	"github.com/djedjethai/bankingLib/logger"
 	"time"
 )
 

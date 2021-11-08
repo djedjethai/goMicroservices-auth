@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/djedjethai/bankingAuth/errs"
+	"github.com/djedjethai/bankingLib/errs"
 	// "time"
 )
 
