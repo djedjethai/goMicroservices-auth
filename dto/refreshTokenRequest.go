@@ -20,6 +20,10 @@ func (r RefreshTokenRequest) IsAccessTokenValid() *jwt.ValidationError {
 
 	if err != nil {
 		var vErr *jwt.ValidationError
+		// it s a type assertion, it check if the err if of type ValidationError
+		// we only return the err in case it's a ValidationError
+		// means the token come from us but is expire
+		// next step of the err handling into the service
 		if errors.As(err, &vErr) {
 			return vErr
 		}

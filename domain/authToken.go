@@ -31,6 +31,7 @@ func NewAccessTokenFromRefreshToken(refreshToken string) (string, *errs.AppError
 	if err != nil {
 		return "", errs.NewAuthenticationError("invalid or expired refresh token")
 	}
+	// get the claim, and we cast it as we know it's this type
 	r := token.Claims.(*RefreshTokenClaims)
 	accessTokenClaims := r.AccessTokenClaims()
 	authToken := NewAuthToken(accessTokenClaims)
@@ -48,6 +49,9 @@ func (t AuthToken) NewAccessToken() (string, *errs.AppError) {
 }
 
 func (t AuthToken) NewRefreshToken() (string, *errs.AppError) {
+	// get the claim which is already store in the t.Token
+	// from when we generated the accessToken
+	// (as this token is generated immediately the accessToken, to be return in the same resp)
 	c := t.Token.Claims.(AccessTokenClaims)
 	refreshClaims := c.RefreshTokenClaims()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)

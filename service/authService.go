@@ -29,6 +29,7 @@ func NewService(db domain.AuthRepository, permissions domain.RolePermissions) *a
 
 func (s *authService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError) {
 	if vErr := request.IsAccessTokenValid(); vErr != nil {
+		// means token is valid but expired
 		if vErr.Errors == jwt.ValidationErrorExpired {
 			// continue with the refresh token functionality
 			var appErr *errs.AppError
@@ -38,6 +39,7 @@ func (s *authService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginRespon
 			}
 
 			// generate a access token from refresh token
+			// as the token is from us but expired, we will generate a new token
 			var accessToken string
 			if accessToken, appErr = domain.NewAccessTokenFromRefreshToken(request.RefreshToken); appErr != nil {
 				return nil, appErr
@@ -55,12 +57,11 @@ func (s *authService) Verify(urlParams map[string]string) *errs.AppError {
 
 	// convert the string token to JWT struct
 	if jwtToken, err := jwtTokenFromString(urlParams["token"]); err != nil {
-		fmt.Printf("seee the: %v\n", err)
 		return errs.NewAuthorizationError(err.Error())
 	} else {
 		// cerify the expire time and signature of the token
 		if jwtToken.Valid {
-			// type cast the token claims to jwt.MapClaims
+			// cast the token claims to jwt.MapClaims
 			claims := jwtToken.Claims.(*domain.AccessTokenClaims)
 
 			logger.Info("Auth Verify after jwtToken.Valid: " + fmt.Sprintf("%v", claims))
